@@ -1,0 +1,696 @@
+:root {
+    --primary: #00E5FF;
+    --surface: rgba(23, 25, 30, 0.7);
+    --background: #0A0C10;
+    --text: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --border: rgba(255, 255, 255, 0.1);
+    --glass-gradient: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.05)
+    );
+    --neon-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: radial-gradient(circle at center, #1a1f2c, #0A0C10);
+    overflow-x: hidden;
+}
+
+/* Add animated background particles */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(2px 2px at 20px 30px, #ffffff05, transparent),
+        radial-gradient(2px 2px at 40px 70px, #ffffff05, transparent),
+        radial-gradient(2px 2px at 50px 160px, #ffffff05, transparent),
+        radial-gradient(2px 2px at 90px 40px, #ffffff05, transparent);
+    background-repeat: repeat;
+    animation: stars 4s linear infinite;
+    z-index: 0;
+}
+
+.trigger-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    font-size: 16px;
+    background: var(--glass-gradient), var(--primary);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--neon-shadow);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    animation: pulse 2s infinite;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: transform 0.2s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+.trigger-button:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 229, 255, 0.3);
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) perspective(1000px);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: transform 0.2s ease-out;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    padding: 24px;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 400px;
+    z-index: 1001;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    background-image: var(--glass-gradient);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    transform: translateZ(20px);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.close-button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+    transform: translateZ(20px);
+}
+
+.payment-option {
+    padding: 16px;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background-image: var(--glass-gradient);
+    position: relative;
+    isolation: isolate;
+    color: var(--text-secondary);
+    transform-style: preserve-3d;
+}
+
+.payment-option::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, var(--primary), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+}
+
+.payment-option:hover::before {
+    opacity: 0.2;
+}
+
+.payment-option.active::before {
+    opacity: 0.4;
+}
+
+.payment-option i {
+    font-size: 24px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    animation: float 3s ease-in-out infinite;
+    transition: all 0.3s;
+    transform: translateZ(10px);
+}
+
+.payment-option:hover i,
+.payment-option.active i {
+    color: var(--text);
+    text-shadow: 0 0 10px var(--primary);
+    transform: scale(1.1);
+}
+
+.payment-option.active {
+    background: var(--primary);
+    box-shadow: var(--neon-shadow);
+    animation: selected 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: activePulse 2s infinite;
+}
+
+.input-group {
+    margin-bottom: 16px;
+    transform: translateZ(20px);
+}
+
+.input-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 16px;
+    color: var(--text);
+    transition: all 0.3s;
+}
+
+.input-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.2);
+}
+
+.fee-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--background);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    color: var(--text-secondary);
+    transform: translateZ(20px);
+}
+
+.pay-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--glass-gradient), var(--primary);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--neon-shadow);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+    transform: translateY(0);
+    transform: translateZ(20px);
+}
+
+.pay-button::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+.pay-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 229, 255, 0.5);
+}
+
+.pay-button:active {
+    transform: translateY(1px);
+}
+
+.social-share {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+    transform: translateZ(20px);
+}
+
+.social-button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.social-button:hover {
+    background: var(--primary);
+    box-shadow: var(--neon-shadow);
+    transform: translateY(-5px) rotate(360deg);
+}
+
+/* Animations */
+@keyframes modalEnter {
+    0% {
+        transform: translate(-50%, -40%) perspective(1000px) rotateX(20deg);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) perspective(1000px) rotateX(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes modalExit {
+    0% {
+        transform: translate(-50%, -50%) perspective(1000px) rotateX(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -60%) perspective(1000px) rotateX(-20deg);
+        opacity: 0;
+    }
+}
+
+@keyframes bubble {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.bubble-animation {
+    animation: bubble 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Success animation overlay */
+.success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 12, 16, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.success-icon {
+    font-size: 64px;
+    color: var(--primary);
+    text-shadow: var(--neon-shadow);
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes successPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) rotate(45deg);
+    }
+}
+
+@keyframes stars {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100vh); }
+}
+
+@keyframes selected {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+}
+
+/* Add these new styles */
+.particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.floating-particle {
+    position: absolute;
+    background: var(--primary);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.6;
+    filter: blur(2px);
+    animation: floatParticle 15s linear infinite;
+}
+
+@keyframes floatParticle {
+    0% {
+        transform: translate(0, 0);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.6;
+    }
+    80% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(var(--moveX), var(--moveY));
+        opacity: 0;
+    }
+}
+
+/* Add pulse animation for active state */
+@keyframes activePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 229, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 229, 255, 0);
+    }
+}
+
+.selection-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: selectionParticle 1s ease-out forwards;
+    transform-origin: center;
+}
+
+@keyframes selectionParticle {
+    0% {
+        transform: rotate(var(--angle)) translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: rotate(var(--angle)) translateY(40px) scale(0);
+        opacity: 0;
+    }
+}
+
+.payment-option div {
+    color: var(--text-secondary);
+    transition: all 0.3s;
+}
+
+.payment-option:hover div,
+.payment-option.active div {
+    color: var(--text);
+}
+
+.payment-option.active {
+    background: rgba(0, 229, 255, 0.2);
+    border-color: var(--primary);
+    box-shadow: var(--neon-shadow);
+}
+
+/* Crypto selection modal */
+.crypto-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    z-index: 1100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.crypto-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.crypto-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 16px;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.crypto-options {
+    display: grid;
+    gap: 12px;
+}
+
+.crypto-option {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crypto-option:hover {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--primary);
+    transform: translateX(8px);
+}
+
+.crypto-option img {
+    width: 32px;
+    height: 32px;
+}
+
+.crypto-option-info {
+    flex: 1;
+}
+
+.crypto-name {
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.crypto-price {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Update crypto related styles */
+.crypto-icon {
+    color: var(--text);
+    transition: all 0.3s;
+}
+
+.crypto-option:hover .crypto-icon {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+/* Update button particle styles */
+.button-particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.button-particle {
+    position: absolute;
+    background: var(--primary);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.6;
+    filter: blur(2px);
+    box-shadow: 0 0 10px var(--primary);
+    animation: buttonParticle 4s linear infinite;
+}
+
+.orb {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), var(--primary));
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: 0 0 20px var(--primary);
+    animation: orbRotate 8s linear infinite;
+    transform-origin: center center;
+}
+
+.trail {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to top, transparent, var(--primary));
+    pointer-events: none;
+    opacity: 0.5;
+    animation: trail 2s linear infinite;
+}
+
+@keyframes buttonParticle {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.8;
+        transform: scale(1) rotate(180deg);
+    }
+    80% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+@keyframes orbRotate {
+    0% {
+        transform: rotate(0deg) translateX(50px) rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg) translateX(50px) rotate(-360deg);
+    }
+}
+
+@keyframes trail {
+    0% {
+        height: 0;
+        opacity: 0;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        height: 30px;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* Add glow effect */
+.trigger-button::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(circle at center, var(--primary), transparent 70%);
+    opacity: 0.3;
+    filter: blur(10px);
+    z-index: -1;
+    animation: buttonGlow 2s ease-in-out infinite;
+}
+
+@keyframes buttonGlow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
+}
