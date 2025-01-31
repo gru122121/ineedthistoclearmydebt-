@@ -1247,3 +1247,249 @@ body::before {
     transform: translateX(-100%);
     animation: shimmer 2s infinite;
 }
+
+/* Add styles for receipt preview */
+.receipt-preview {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.receipt-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.receipt-image:hover {
+    transform: scale(1.02);
+}
+
+.download-button {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: var(--background);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.download-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 229, 255, 0.3);
+}
+
+.download-button i {
+    font-size: 20px;
+}
+
+/* Update exit animation styles */
+.exit-animation {
+    animation: exitScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+.exit-particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: exitParticle var(--speed) cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    filter: blur(1px);
+}
+
+.electric-effect {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, var(--primary), transparent);
+    opacity: 0;
+    animation: electricPulse 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes exitScale {
+    0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.3) rotate(-15deg);
+        opacity: 0;
+    }
+}
+
+@keyframes exitParticle {
+    0% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateY(150px);
+        opacity: 0;
+    }
+}
+
+@keyframes electricPulse {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.5);
+    }
+}
+
+/* Mobile-specific styles - Add these at the end of your CSS file */
+@media screen and (max-width: 768px) {
+    .modal {
+        width: 95%;
+        padding: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .payment-options {
+        gap: 8px;
+    }
+
+    .payment-option {
+        padding: 12px;
+    }
+
+    .payment-option i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .payment-option div {
+        font-size: 14px;
+    }
+
+    .input-group input {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .fee-breakdown {
+        padding: 16px;
+    }
+
+    .fee-item {
+        font-size: 13px;
+        padding: 10px 0;
+    }
+
+    .fee-item span:last-child {
+        font-size: 13px;
+    }
+
+    .fee-item.grand-total {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .fee-item.grand-total span:last-child {
+        font-size: 16px;
+    }
+
+    /* Success screen mobile adjustments */
+    .success-content {
+        padding: 16px;
+    }
+
+    .share-options {
+        gap: 8px;
+    }
+
+    .share-button {
+        padding: 12px 8px;
+    }
+
+    .share-button i {
+        font-size: 18px;
+    }
+
+    .share-button span {
+        font-size: 12px;
+    }
+
+    /* Crypto modal mobile adjustments */
+    .crypto-modal {
+        padding: 16px;
+    }
+
+    .crypto-option {
+        padding: 12px;
+    }
+
+    .crypto-name {
+        font-size: 14px;
+    }
+
+    .crypto-price {
+        font-size: 12px;
+    }
+
+    /* Transaction info mobile adjustments */
+    .transaction-info {
+        padding: 16px;
+        margin: 20px 0;
+    }
+
+    .transaction-info code {
+        font-size: 12px;
+        padding: 6px 8px;
+        word-break: break-all;
+    }
+
+    /* Receipt preview mobile adjustments */
+    .receipt-preview {
+        margin-top: 16px;
+        padding: 12px;
+    }
+
+    .download-button {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Fix modal scrolling on mobile */
+    .modal-overlay {
+        align-items: flex-start;
+        padding: 20px 0;
+    }
+
+    /* Ensure buttons are easy to tap on mobile */
+    .close-button,
+    .social-button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Add specific iPhone notch handling */
+@supports (padding: max(0px)) {
+    .modal {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+}

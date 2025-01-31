@@ -23,6 +23,10 @@ const sounds = {
     whoosh: new Howl({
         src: ['https://assets.mixkit.co/sfx/preview/mixkit-fast-small-sweep-transition-166.mp3'],
         volume: 0.3
+    }),
+    tada: new Howl({
+        src: ['tada.mp3'],
+        volume: 0.5
     })
 };
 
@@ -285,6 +289,13 @@ function showSuccessAnimation() {
                         <span>${cryptoDetails.explorerName}</span>
                     </button>
                 </div>
+                <div class="receipt-preview">
+                    <img src="${generateReceiptImage()}" alt="Payment Receipt" class="receipt-image">
+                    <button onclick="downloadReceipt()" class="download-button">
+                        <i class="ri-download-2-line"></i>
+                        Save Receipt
+                    </button>
+                </div>
             </div>
             <button onclick="closeSuccessOverlay()" class="done-button">
                 Done
@@ -295,6 +306,7 @@ function showSuccessAnimation() {
     document.body.appendChild(overlay);
     sounds.success.play();
     setTimeout(() => sounds.coins.play(), 300);
+    setTimeout(() => sounds.tada.play(), 600);
     
     // Trigger confetti in crypto colors
     triggerConfetti(cryptoDetails.colors);
@@ -376,11 +388,87 @@ function triggerConfetti(colors) {
 
 function closeSuccessOverlay() {
     const overlay = document.querySelector('.success-overlay');
-    overlay.style.opacity = '0';
+    const content = overlay.querySelector('.success-content');
+    const cryptoDetails = getCryptoDetails();
+    
+    // Add exit animation class
+    content.classList.add('exit-animation');
+    
+    // Create particle explosion
+    createExitParticles(overlay);
+    
+    // Play whoosh sound
+    sounds.whoosh.play();
+    
+    // Final confetti burst
+    confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors: cryptoDetails.colors,
+        angle: 90,
+        startVelocity: 45,
+        gravity: 0.7,
+        ticks: 400
+    });
+    
+    // Side confetti bursts
     setTimeout(() => {
-        overlay.remove();
-        closeModal();
-    }, 500);
+        confetti({
+            particleCount: 80,
+            angle: 60,
+            spread: 80,
+            origin: { x: 0, y: 0.5 },
+            colors: cryptoDetails.colors
+        });
+        confetti({
+            particleCount: 80,
+            angle: 120,
+            spread: 80,
+            origin: { x: 1, y: 0.5 },
+            colors: cryptoDetails.colors
+        });
+    }, 100);
+    
+    // Create electric effect
+    const electric = document.createElement('div');
+    electric.className = 'electric-effect';
+    overlay.appendChild(electric);
+    
+    // Fade out overlay
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.remove();
+            closeModal();
+        }, 500);
+    }, 300);
+}
+
+function createExitParticles(overlay) {
+    const particles = 24; // Increased number of particles
+    const colors = getCryptoDetails().colors;
+    
+    for (let i = 0; i < particles; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'exit-particle';
+        
+        // Random size for particles
+        const size = Math.random() * 8 + 4;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // Set random color from crypto colors
+        particle.style.background = colors[i % colors.length];
+        particle.style.boxShadow = `0 0 10px ${colors[i % colors.length]}`;
+        
+        // Set random angle and speed for particle trajectory
+        const angle = (i / particles) * 360;
+        particle.style.setProperty('--angle', `${angle}deg`);
+        particle.style.setProperty('--speed', `${0.6 + Math.random() * 0.4}s`);
+        
+        overlay.appendChild(particle);
+    }
 }
 
 function copyPaymentLink() {
@@ -724,4 +812,96 @@ function openExplorer() {
     if (cryptoDetails.explorerUrl) {
         window.open(cryptoDetails.explorerUrl, '_blank');
     }
+}
+
+function generateReceiptImage() {
+    const cryptoDetails = getCryptoDetails();
+    const amount = document.getElementById('amount').value;
+    const time = new Date().toLocaleTimeString();
+    const txId = generateTransactionId();
+
+    // Create a canvas element
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 630; // Twitter card size
+    const ctx = canvas.getContext('2d');
+
+    // Set gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a1f2c');
+    gradient.addColorStop(1, '#0A0C10');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add glass effect overlay
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.fillRect(100, 50, canvas.width - 200, canvas.height - 100);
+
+    // Add blur effect border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(100, 50, canvas.width - 200, canvas.height - 100);
+
+    // Set text styles
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+
+    // Draw amount
+    ctx.font = 'bold 72px SF Pro Display';
+    ctx.fillStyle = cryptoDetails.colors[0];
+    ctx.fillText(`${cryptoDetails.symbol}${amount}`, canvas.width/2, 200);
+
+    // Draw network info
+    ctx.font = '32px SF Pro Display';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(cryptoDetails.network, canvas.width/2, 280);
+
+    // Draw transaction details
+    ctx.font = '24px SF Pro Display';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(`Transaction ID: ${txId}`, canvas.width/2, 350);
+    ctx.fillText(`Time: ${time}`, canvas.width/2, 400);
+    ctx.fillText(`Network Fee: ${cryptoDetails.fee} ${cryptoDetails.symbol}`, canvas.width/2, 450);
+
+    // Add decorative elements
+    drawDecorativeElements(ctx, cryptoDetails.colors);
+
+    // Add logo or branding
+    ctx.font = 'bold 28px SF Pro Display';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Payment Receipt', canvas.width/2, 550);
+
+    return canvas.toDataURL('image/png');
+}
+
+function drawDecorativeElements(ctx, colors) {
+    // Add glowing circles
+    ctx.beginPath();
+    const gradient = ctx.createRadialGradient(200, 200, 0, 200, 200, 100);
+    gradient.addColorStop(0, colors[0] + '33');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.arc(200, 200, 100, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add floating particles
+    for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length] + '33';
+        ctx.arc(
+            Math.random() * ctx.canvas.width,
+            Math.random() * ctx.canvas.height,
+            Math.random() * 4 + 2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
+}
+
+function downloadReceipt() {
+    const link = document.createElement('a');
+    link.download = 'payment-receipt.png';
+    link.href = generateReceiptImage();
+    link.click();
 }
