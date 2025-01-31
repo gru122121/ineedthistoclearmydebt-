@@ -10,17 +10,19 @@ const sounds = {
     }),
     click: new Howl({
         src: ['click.mp3'],
-        volume: 0.3,
-        rate: 1.2
+        volume: 0.3
     }),
     success: new Howl({
-        src: ['click.mp3'],
-        volume: 0.5,
-        rate: 1.5
+        src: ['https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'],
+        volume: 0.5
     }),
-    payment: new Howl({
-        src: ['https://assets.mixkit.co/active_storage/sfx/2019/payment-success-2157.wav'],
+    coins: new Howl({
+        src: ['https://assets.mixkit.co/sfx/preview/mixkit-coins-handling-1939.mp3'],
         volume: 0.4
+    }),
+    whoosh: new Howl({
+        src: ['https://assets.mixkit.co/sfx/preview/mixkit-fast-small-sweep-transition-166.mp3'],
+        volume: 0.3
     })
 };
 
@@ -122,11 +124,83 @@ function createSelectionEffect(element) {
 
 function calculateFee() {
     const amount = parseFloat(document.getElementById('amount').value) || 0;
-    const fee = currentPaymentMethod === 'fiat' ? amount * 0.029 + 0.30 : amount * 0.01;
-    document.getElementById('feeInfo').innerHTML = `
-        Transaction fee: $${fee.toFixed(2)}<br>
-        Total amount: $${(amount + fee).toFixed(2)}
-    `;
+    let feeDetails = '';
+    
+    if (currentPaymentMethod === 'fiat') {
+        const processingFee = amount * 0.029;
+        const fixedFee = 0.30;
+        const totalFee = processingFee + fixedFee;
+        
+        feeDetails = `
+            <div class="fee-breakdown">
+                <div class="fee-item">
+                    <span>
+                        <i class="ri-percent-line"></i>
+                        Processing Fee (2.9%)
+                    </span>
+                    <span>$${processingFee.toFixed(2)}</span>
+                </div>
+                <div class="fee-item">
+                    <span>
+                        <i class="ri-add-circle-line"></i>
+                        Fixed Fee
+                    </span>
+                    <span>$${fixedFee.toFixed(2)}</span>
+                </div>
+                <div class="fee-item total">
+                    <span>
+                        <i class="ri-exchange-dollar-line"></i>
+                        Total Fee
+                    </span>
+                    <span>$${totalFee.toFixed(2)}</span>
+                </div>
+                <div class="fee-item grand-total">
+                    <span>
+                        <i class="ri-money-dollar-circle-line"></i>
+                        Final Amount
+                    </span>
+                    <span>$${(amount + totalFee).toFixed(2)}</span>
+                </div>
+            </div>
+        `;
+    } else if (currentPaymentMethod === 'solana' && selectedCrypto) {
+        const networkFees = {
+            btc: { fee: 0.0001, symbol: '₿' },
+            eth: { fee: 0.002, symbol: 'Ξ' },
+            sol: { fee: 0.000005, symbol: 'SOL' }
+        };
+        
+        const cryptoFee = networkFees[selectedCrypto];
+        const total = amount + cryptoFee.fee;
+        
+        feeDetails = `
+            <div class="fee-breakdown">
+                <div class="fee-item">
+                    <span>
+                        <i class="ri-gas-station-line"></i>
+                        Network Fee
+                    </span>
+                    <span>${cryptoFee.fee} ${cryptoFee.symbol}</span>
+                </div>
+                <div class="fee-item grand-total">
+                    <span>
+                        <i class="ri-coin-line"></i>
+                        Final Amount
+                    </span>
+                    <span>${total.toFixed(6)} ${cryptoFee.symbol}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    const feeInfo = document.getElementById('feeInfo');
+    feeInfo.innerHTML = feeDetails;
+    
+    // Add updating animation to numbers
+    document.querySelectorAll('.fee-item').forEach(item => {
+        item.classList.add('updating');
+        setTimeout(() => item.classList.remove('updating'), 300);
+    });
 }
 
 function createRipple(event, element) {
@@ -146,55 +220,212 @@ function createRipple(event, element) {
     });
 }
 
-function processPayment() {
+async function processPayment() {
     if (!currentPaymentMethod) {
         alert('Please select a payment method');
         return;
     }
-    
-    if (currentPaymentMethod === 'solana' && !selectedCrypto) {
-        alert('Please select a cryptocurrency');
-        return;
-    }
-    
+
     const amount = document.getElementById('amount').value;
     if (!amount) {
         alert('Please enter an amount');
         return;
     }
+
+    // Show success animation for both payment methods
+    showSuccessAnimation();
+}
+
+function showSuccessAnimation() {
+    const overlay = document.createElement('div');
+    overlay.className = 'success-overlay';
     
+    // Get crypto-specific details
+    const cryptoDetails = getCryptoDetails();
+    
+    overlay.innerHTML = `
+        <div class="success-content">
+            <div class="success-animation">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+            <div class="success-amount">
+                ${cryptoDetails.symbol}${document.getElementById('amount').value}
+            </div>
+            <div class="success-message">Payment Complete!</div>
+            <div class="transaction-info">
+                <div class="transaction-id">
+                    <span>Transaction ID</span>
+                    <code>${generateTransactionId()}</code>
+                </div>
+                <div class="network">
+                    <span>Network</span>
+                    <code>${cryptoDetails.network}</code>
+                </div>
+                <div class="transaction-time">
+                    <span>Time</span>
+                    <code>${new Date().toLocaleTimeString()}</code>
+                </div>
+            </div>
+            <div class="share-section">
+                <h3>Share Your Payment</h3>
+                <div class="share-options">
+                    <button onclick="shareToTwitter()" class="share-button twitter">
+                        <i class="ri-twitter-fill"></i>
+                        <span>Twitter</span>
+                    </button>
+                    <button onclick="shareToInstagram()" class="share-button instagram">
+                        <i class="ri-instagram-fill"></i>
+                        <span>Instagram</span>
+                    </button>
+                    <button onclick="openExplorer()" class="share-button explorer">
+                        <i class="${cryptoDetails.explorerIcon}"></i>
+                        <span>${cryptoDetails.explorerName}</span>
+                    </button>
+                </div>
+            </div>
+            <button onclick="closeSuccessOverlay()" class="done-button">
+                Done
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
     sounds.success.play();
+    setTimeout(() => sounds.coins.play(), 300);
     
-    // Create electric effect
-    const electric = document.createElement('div');
-    electric.classList.add('electric-effect');
-    document.body.appendChild(electric);
+    // Trigger confetti in crypto colors
+    triggerConfetti(cryptoDetails.colors);
     
-    // Particle explosion
-    for (let i = 0; i < 20; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        particle.style.setProperty('--angle', `${i * 18}deg`);
-        document.body.appendChild(particle);
-        
-        setTimeout(() => particle.remove(), 1000);
+    requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        overlay.classList.add('active');
+    });
+}
+
+function getCryptoDetails() {
+    if (currentPaymentMethod === 'fiat') {
+        return {
+            symbol: '$',
+            network: 'Bank Transfer',
+            explorerIcon: 'ri-bank-line',
+            explorerName: 'Receipt',
+            colors: ['#00E5FF', '#ffffff']
+        };
     }
     
-    // Success checkmark animation
-    const success = document.createElement('div');
-    success.classList.add('success-checkmark');
-    success.innerHTML = '<i class="ri-checkbox-circle-line"></i>';
-    document.body.appendChild(success);
+    const cryptoConfigs = {
+        btc: {
+            symbol: '₿',
+            network: 'Bitcoin Network',
+            explorerIcon: 'ri-bitcoin-line',
+            explorerName: 'Block Explorer',
+            colors: ['#F7931A', '#FFAE34'],
+            explorerUrl: 'https://blockchain.com/explorer'
+        },
+        eth: {
+            symbol: 'Ξ',
+            network: 'Ethereum Network',
+            explorerIcon: 'ri-ethereum-line',
+            explorerName: 'Etherscan',
+            colors: ['#627EEA', '#85A5FF'],
+            explorerUrl: 'https://etherscan.io'
+        },
+        sol: {
+            symbol: 'SOL',
+            network: 'Solana Network',
+            explorerIcon: 'ri-compass-3-line',
+            explorerName: 'Solscan',
+            colors: ['#14F195', '#9945FF'],
+            explorerUrl: 'https://solscan.io'
+        }
+    };
+
+    return cryptoConfigs[selectedCrypto];
+}
+
+function triggerConfetti(colors) {
+    // First burst
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        colors: colors,
+        origin: { y: 0.6 }
+    });
+
+    // Second burst with delay
+    setTimeout(() => {
+        confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            colors: colors,
+            origin: { x: 0, y: 0.6 }
+        });
+        confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            colors: colors,
+            origin: { x: 1, y: 0.6 }
+        });
+    }, 200);
+}
+
+function closeSuccessOverlay() {
+    const overlay = document.querySelector('.success-overlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.remove();
+        closeModal();
+    }, 500);
+}
+
+function copyPaymentLink() {
+    const amount = document.getElementById('amount').value;
+    const link = `https://yourwebsite.com/pay?amount=${amount}&method=${currentPaymentMethod}`;
+    navigator.clipboard.writeText(link);
+    
+    const copyButton = document.querySelector('.share-button.copy');
+    const originalContent = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="ri-check-line"></i><span>Copied!</span>';
+    copyButton.classList.add('copied');
     
     setTimeout(() => {
-        success.remove();
-        electric.remove();
-        closeModal();
+        copyButton.innerHTML = originalContent;
+        copyButton.classList.remove('copied');
     }, 2000);
 }
 
+function showPhantomPrompt() {
+    const prompt = document.createElement('div');
+    prompt.className = 'phantom-prompt';
+    prompt.innerHTML = `
+        <div class="prompt-content">
+            <img src="https://phantom.app/img/logo.png" alt="Phantom">
+            <h3>Install Phantom Wallet</h3>
+            <p>To complete this transaction, you'll need to install the Phantom wallet.</p>
+            <button onclick="window.open('https://phantom.app/', '_blank')">
+                <i class="ri-external-link-line"></i>
+                Get Phantom
+            </button>
+        </div>
+    `;
+    document.body.appendChild(prompt);
+}
+
+function generateTransactionId() {
+    return 'tx_' + Math.random().toString(36).substr(2, 9);
+}
+
 function shareToTwitter() {
-    const text = encodeURIComponent('Just sent a payment using the cutest payment modal ever! 🐾💖');
+    const cryptoDetails = getCryptoDetails();
+    const amount = document.getElementById('amount').value;
+    const text = encodeURIComponent(
+        `Just sent ${cryptoDetails.symbol}${amount} using the coolest payment modal ever! 🚀✨\nNetwork: ${cryptoDetails.network}`
+    );
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
 }
 
@@ -265,7 +496,7 @@ function selectCrypto(crypto) {
     }, 500);
 }
 
-// Add parallax effect
+// Update the handleParallax function
 function handleParallax(e) {
     const modal = document.getElementById('payModal');
     const triggerButton = document.querySelector('.trigger-button');
@@ -284,8 +515,8 @@ function handleParallax(e) {
         modal.style.transform = `translate(-50%, -50%) perspective(1000px) rotateY(${xWalk/2}deg) rotateX(${-yWalk/2}deg)`;
     }
     
-    // Apply parallax to trigger button
-    triggerButton.style.transform = `perspective(1000px) rotateY(${xWalk/3}deg) rotateX(${-yWalk/3}deg)`;
+    // Apply parallax to trigger button while maintaining center position
+    triggerButton.style.transform = `translate(-50%, -50%) perspective(1000px) rotateY(${xWalk/3}deg) rotateX(${-yWalk/3}deg)`;
 }
 
 // Update the event listeners in DOMContentLoaded
@@ -486,4 +717,11 @@ function createButtonParticles() {
 
     window.addEventListener('scroll', updateOrbPositions);
     window.addEventListener('resize', updateOrbPositions);
+}
+
+function openExplorer() {
+    const cryptoDetails = getCryptoDetails();
+    if (cryptoDetails.explorerUrl) {
+        window.open(cryptoDetails.explorerUrl, '_blank');
+    }
 }
